@@ -13,8 +13,14 @@ Autodesk.Viewing.Initializer(
 },
 function () {
 
-    const viewer = new Autodesk.Viewing.GuiViewer3D(
-        document.getElementById("viewer")
+    const viewer = new Autodesk.Viewing.Viewer3D(
+        document.getElementById("viewer"),
+        {
+            disabledExtensions: {
+                viewcube: true,
+                hyperlink: true
+            }
+        }
     );
 
     viewer.start();
@@ -28,6 +34,17 @@ function () {
             console.log("✅ Model Loaded");
 
             const measureExt = await viewer.loadExtension("Autodesk.Measure");
+            const measureButton = document.getElementById("measureBtn");
+
+            function enableDistanceMeasure() {
+                viewer.activateExtension("Autodesk.Measure", "distance");
+            }
+
+            enableDistanceMeasure();
+
+            measureButton.addEventListener("click", function () {
+                enableDistanceMeasure();
+            });
 
             console.log("✅ Measure Ready");
 

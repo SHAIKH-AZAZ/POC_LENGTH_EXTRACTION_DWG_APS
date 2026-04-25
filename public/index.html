@@ -24,17 +24,14 @@
             height:100vh;
         }
 
-        .capture-btn{
+        .viewer-btn{
 
             position:absolute;
             top:20px;
-            left:20px;
 
             z-index:9999;
 
             padding:12px 20px;
-
-            background:linear-gradient(135deg,#28a745,#1e7e34);
             color:white;
 
             border:none;
@@ -50,12 +47,22 @@
             transition:all 0.25s ease;
         }
 
-        .capture-btn:hover{
+        .measure-btn{
+            left:20px;
+            background:linear-gradient(135deg,#0d6efd,#084298);
+        }
+
+        .capture-btn{
+            left:150px;
+            background:linear-gradient(135deg,#28a745,#1e7e34);
+        }
+
+        .viewer-btn:hover{
             transform:translateY(-2px);
             box-shadow:0 8px 18px rgba(0,0,0,0.35);
         }
 
-        .capture-btn:active{
+        .viewer-btn:active{
             transform:scale(0.97);
         }
 
@@ -64,7 +71,11 @@
 
 <body>
 
-    <button id="captureBtn" class="capture-btn">
+    <button id="measureBtn" class="viewer-btn measure-btn">
+        Measure
+    </button>
+
+    <button id="captureBtn" class="viewer-btn capture-btn">
         Extract Length
     </button>
 
