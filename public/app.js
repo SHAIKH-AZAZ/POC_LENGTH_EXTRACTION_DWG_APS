@@ -40,7 +40,9 @@ function () {
                 viewer.activateExtension("Autodesk.Measure", "distance");
             }
 
-            enableDistanceMeasure();
+            function disableDistanceMeasure() {
+                viewer.deactivateExtension("Autodesk.Measure");
+            }
 
             measureButton.addEventListener("click", function () {
                 enableDistanceMeasure();
@@ -94,7 +96,7 @@ function () {
                             body: JSON.stringify({ distance })
                         });
                         
-                        const cleanDistance = distance.toFixed(2);
+                        disableDistanceMeasure();
 
                         alert(`✅ Length Extracted: ${distance} mm`);
 
