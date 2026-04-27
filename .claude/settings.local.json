@@ -1,7 +1,15 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(node -c public/app.js)",
+      "Bash(node -c public/upload.js)",
+      "Bash(node -c public/viewer.js)",
+      "Bash(node -c public/progress.js)",
+      "Bash(node -c services/app.js)",
+      "Bash(node -c services/oss.js)",
+      "Bash(node -c services/modelderivative.js)",
+      "Bash(node -c routes/upload.js)"
     ]
   }
 }
