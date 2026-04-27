@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { upload, checkStatus } from "../services/app.js";
+import { upload, checkStatus, listFiles, deleteFile } from "../services/app.js";
 
 const router = express.Router();
 
@@ -39,6 +39,34 @@ router.get("/status/:urn", async (req, res) => {
     } catch (err) {
         console.error("STATUS ERROR:", err.response?.data || err.message);
         res.status(500).json({ error: "Status check failed" });
+    }
+});
+
+// GET /api/upload/list — list uploaded files with status (paginated)
+router.get("/list", async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = parseInt(req.query.offset) || 0;
+        const status = req.query.status || "all";
+
+        const result = await listFiles(limit, offset, status);
+        res.json(result);
+    } catch (err) {
+        console.error("LIST ERROR:", err.response?.data || err.message);
+        res.status(500).json({ error: "List failed" });
+    }
+});
+
+// DELETE /api/upload/file?urn=... — delete a file from OSS
+router.delete("/file", async (req, res) => {
+    try {
+        const urn = req.query.urn;
+        if (!urn) return res.status(400).json({ error: "URN required" });
+        await deleteFile(urn);
+        res.json({ success: true });
+    } catch (err) {
+        console.error("DELETE ERROR:", err.response?.data || err.message);
+        res.status(500).json({ error: "Delete failed" });
     }
 });
 

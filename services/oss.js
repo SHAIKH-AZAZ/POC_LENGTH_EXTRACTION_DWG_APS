@@ -32,6 +32,27 @@ export async function ensureBucket(token, bucketKey) {
     }
 }
 
+export async function listObjects(token, bucketKey, limit = 100, startAt = null) {
+    const params = { limit };
+    if (startAt) params.startAt = startAt;
+
+    const res = await axios.get(
+        `${APS_BASE}/oss/v2/buckets/${bucketKey}/objects`,
+        {
+            headers: { Authorization: `Bearer ${token}` },
+            params
+        }
+    );
+    return res.data.items || [];
+}
+
+export async function deleteObject(token, bucketKey, objectKey) {
+    await axios.delete(
+        `${APS_BASE}/oss/v2/buckets/${bucketKey}/objects/${encodeURIComponent(objectKey)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+}
+
 export async function uploadToOSS(token, bucketKey, fileName, fileBuffer) {
     await ensureBucket(token, bucketKey);
 
