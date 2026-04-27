@@ -65,7 +65,7 @@ async function pollStatus(urn) {
     }
 }
 
-async function handleUpload() {
+export async function handleUpload() {
     const file = fileInput.files[0];
     if (!file) return;
 

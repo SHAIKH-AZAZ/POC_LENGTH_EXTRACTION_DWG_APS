@@ -32,14 +32,7 @@ export function launch(urn) {
 
                     console.log("✅ Measure Ready");
 
-                    let locked = false;
-
                     document.getElementById("captureBtn").addEventListener("click", async () => {
-                        if (locked) {
-                            alert("Measurement already captured. Reload page for a new one.");
-                            return;
-                        }
-
                         const measurements = measureExt.getMeasurementList();
 
                         if (!measurements.length) {
@@ -61,7 +54,6 @@ export function launch(urn) {
                             return;
                         }
 
-                        locked = true;
                         console.log("✅ Length Extracted:", distance);
 
                         try {
@@ -71,7 +63,16 @@ export function launch(urn) {
                                 body: JSON.stringify({ distance })
                             });
 
-                            viewer.deactivateExtension("Autodesk.Measure");
+                            // Exit measurement mode and clear so next measure starts fresh
+                            if (measureExt.exitMeasurementMode) {
+                                measureExt.exitMeasurementMode();
+                            }
+                            if (measureExt.deleteMeasurements) {
+                                measureExt.deleteMeasurements();
+                            }
+                            if (measureExt.deactivate) {
+                                measureExt.deactivate();
+                            }
                             alert(`✅ Length Extracted: ${distance} mm`);
                         } catch (err) {
                             console.error(err);
