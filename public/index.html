@@ -215,6 +215,23 @@
 
         #viewer{ width:100%; height:100%; }
 
+        .view-select{
+            position:absolute;
+            top:20px;
+            left:20px;
+            z-index:9999;
+            width:210px;
+            padding:10px 12px;
+            color:#e5e7eb;
+            background:#111827;
+            border:1px solid #374151;
+            border-radius:4px;
+            font-size:14px;
+            font-weight:600;
+            cursor:pointer;
+        }
+        .view-select:disabled{ opacity:0.55; cursor:not-allowed; }
+
         .viewer-btn{
             position:absolute;
             top:20px;
@@ -228,8 +245,8 @@
             cursor:pointer;
             transition:filter 0.2s;
         }
-        .measure-btn{ left:20px; background:#374151; border-color:#2b3440; }
-        .capture-btn{ left:150px; background:#4b5563; border-color:#3f4854; }
+        .measure-btn{ left:250px; background:#374151; border-color:#2b3440; }
+        .capture-btn{ left:380px; background:#4b5563; border-color:#3f4854; }
         .viewer-btn:hover { filter:brightness(0.96); }
         .viewer-btn:active{ filter:brightness(0.92); }
 
@@ -502,6 +519,9 @@
 
 <!-- ── Viewer Panel ── -->
 <div id="viewerPanel">
+    <select id="viewSelect" class="view-select" disabled>
+        <option>Loading views...</option>
+    </select>
     <button id="measureBtn" class="viewer-btn measure-btn">Measure</button>
     <button id="captureBtn" class="viewer-btn capture-btn">Extract Length</button>
     <div id="viewer"></div>
