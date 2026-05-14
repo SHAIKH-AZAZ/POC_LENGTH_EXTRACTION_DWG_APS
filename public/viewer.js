@@ -5,6 +5,8 @@ async function getToken(callback) {
 }
 
 let currentViewer = null;
+let searchResults = [];
+let searchIndex = -1;
 
 function getViewables(doc) {
     return doc.getRoot().search({ type: "geometry" }, true);
@@ -38,6 +40,114 @@ function populateViewSelect(select, viewables, selectedIndex) {
     select.disabled = viewables.length <= 1;
 }
 
+function showViewLoadError(message) {
+    const viewSelect = document.getElementById("viewSelect");
+    viewSelect.innerHTML = "";
+
+    const option = document.createElement("option");
+    option.textContent = message;
+    viewSelect.appendChild(option);
+    viewSelect.disabled = true;
+    setSearchReady(false);
+}
+
+function getSearchElements() {
+    return {
+        form: document.getElementById("viewerSearchForm"),
+        input: document.getElementById("viewerSearchInput"),
+        searchBtn: document.getElementById("viewerSearchBtn"),
+        prevBtn: document.getElementById("searchPrevBtn"),
+        nextBtn: document.getElementById("searchNextBtn"),
+        status: document.getElementById("searchStatus")
+    };
+}
+
+function setSearchReady(isReady) {
+    const { input, searchBtn } = getSearchElements();
+    input.disabled = !isReady;
+    searchBtn.disabled = !isReady;
+}
+
+function setSearchNavigationReady(isReady) {
+    const { prevBtn, nextBtn } = getSearchElements();
+    prevBtn.disabled = !isReady;
+    nextBtn.disabled = !isReady;
+}
+
+function resetSearchState(clearInput = false) {
+    const { input, status } = getSearchElements();
+    searchResults = [];
+    searchIndex = -1;
+    status.textContent = "";
+    setSearchNavigationReady(false);
+    if (clearInput) input.value = "";
+    if (currentViewer?.model && currentViewer.clearSelection) {
+        currentViewer.clearSelection();
+    }
+}
+
+function showSearchResult(index) {
+    if (!currentViewer || !searchResults.length) return;
+
+    searchIndex = (index + searchResults.length) % searchResults.length;
+    const dbId = searchResults[searchIndex];
+    const ids = [dbId];
+    const { status } = getSearchElements();
+
+    currentViewer.select(ids);
+    currentViewer.fitToView(ids);
+    status.textContent = `${searchIndex + 1} / ${searchResults.length}`;
+}
+
+function setupSearchControls(viewer) {
+    const { form, input, searchBtn, prevBtn, nextBtn, status } = getSearchElements();
+
+    resetSearchState(true);
+    setSearchReady(false);
+
+    form.onsubmit = event => {
+        event.preventDefault();
+
+        const query = input.value.trim();
+        if (!query) {
+            resetSearchState();
+            return;
+        }
+
+        searchBtn.disabled = true;
+        setSearchNavigationReady(false);
+        status.textContent = "Searching...";
+
+        viewer.search(
+            query,
+            dbIds => {
+                searchResults = [...new Set(dbIds || [])];
+                searchIndex = -1;
+                searchBtn.disabled = false;
+
+                if (!searchResults.length) {
+                    status.textContent = "No matches";
+                    return;
+                }
+
+                setSearchNavigationReady(searchResults.length > 1);
+                showSearchResult(0);
+            },
+            err => {
+                console.error("SEARCH ERROR:", err);
+                searchResults = [];
+                searchIndex = -1;
+                searchBtn.disabled = false;
+                setSearchNavigationReady(false);
+                status.textContent = "Search failed";
+            }
+        );
+    };
+
+    prevBtn.onclick = () => showSearchResult(searchIndex - 1);
+    nextBtn.onclick = () => showSearchResult(searchIndex + 1);
+}
+
 export function launch(urn) {
     document.getElementById("uploadPanel").style.display = "none";
     document.getElementById("viewerPanel").style.display = "block";
@@ -47,7 +157,11 @@ export function launch(urn) {
     viewSelect.disabled = true;
 
     Autodesk.Viewing.Initializer(
-        { env: "AutodeskProduction", getAccessToken: getToken },
+        {
+            env: "AutodeskProduction2",
+            api: "streamingV2",
+            getAccessToken: getToken
+        },
         function () {
             if (currentViewer) {
                 currentViewer.finish();
@@ -59,8 +173,14 @@ export function launch(urn) {
                 { disabledExtensions: { viewcube: true, hyperlink: true } }
             );
             currentViewer = viewer;
+            setupSearchControls(viewer);
 
-            viewer.start();
+            const startCode = viewer.start();
+            if (startCode > 0) {
+                showViewLoadError("Viewer not supported");
+                console.error("VIEWER START ERROR:", startCode);
+                return;
+            }
 
             Autodesk.Viewing.Document.load(urn, function (doc) {
                 const viewables = getViewables(doc);
@@ -74,6 +194,8 @@ export function launch(urn) {
 
                 async function loadViewable(viewable) {
                     viewSelect.disabled = true;
+                    setSearchReady(false);
+                    resetSearchState();
 
                     if (measureExt?.deleteMeasurements) {
                         measureExt.deleteMeasurements();
@@ -82,9 +204,14 @@ export function launch(urn) {
                         viewer.unloadModel(viewer.model);
                     }
 
+                    if (!viewable) {
+                        throw new Error("No drawable view found in this model.");
+                    }
+
                     await viewer.loadDocumentNode(doc, viewable);
                     viewer.fitToView();
                     viewSelect.disabled = viewables.length <= 1;
+                    setSearchReady(true);
                 }
 
                 populateViewSelect(viewSelect, viewables, initialIndex);
@@ -154,8 +281,14 @@ export function launch(urn) {
                             alert("❌ Failed to save measurement.");
                         }
                     };
-                }).catch(console.error);
-            }, console.error);
+                }).catch(err => {
+                    showViewLoadError("Failed to load view");
+                    console.error("VIEW LOAD ERROR:", err);
+                });
+            }, err => {
+                showViewLoadError("Failed to load drawing");
+                console.error("DOCUMENT LOAD ERROR:", err);
+            });
         }
     );
 }
