@@ -255,6 +255,7 @@
         }
         .measure-btn{ background:#374151; border-color:#2b3440; }
         .capture-btn{ background:#4b5563; border-color:#3f4854; }
+        .bar-toggle-btn{ background:#0f766e; border-color:#115e59; }
         .viewer-btn:hover:not(:disabled) { filter:brightness(0.96); }
         .viewer-btn:active{ filter:brightness(0.92); }
         .viewer-btn:disabled{ opacity:0.5; cursor:not-allowed; }
@@ -317,6 +318,130 @@
             color:#cbd5e1;
             font-size:12px;
             text-align:right;
+        }
+
+        .bar-panel{
+            position:absolute;
+            top:78px;
+            right:20px;
+            z-index:9998;
+            width:min(370px, calc(100vw - 40px));
+            display:flex;
+            flex-direction:column;
+            gap:12px;
+            padding:14px;
+            background:rgba(15, 22, 35, 0.94);
+            border:1px solid #253246;
+            border-radius:6px;
+            box-shadow:0 12px 30px rgba(0, 0, 0, 0.28);
+        }
+        .bar-panel.hidden{ display:none; }
+
+        .bar-header{
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+        }
+        .bar-header h3{
+            margin:0;
+            color:#f3f4f6;
+            font-size:15px;
+            font-weight:700;
+        }
+        .bar-count{
+            color:#94a3b8;
+            font-size:12px;
+            white-space:nowrap;
+        }
+
+        .bar-controls{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:10px;
+        }
+        .bar-field{
+            display:flex;
+            flex-direction:column;
+            gap:5px;
+        }
+        .bar-field label{
+            color:#94a3b8;
+            font-size:11px;
+            font-weight:700;
+            text-transform:uppercase;
+            letter-spacing:0.4px;
+        }
+        .bar-field input,
+        .bar-field select{
+            width:100%;
+            min-width:0;
+            height:34px;
+            padding:7px 9px;
+            color:#e5e7eb;
+            background:#111827;
+            border:1px solid #374151;
+            border-radius:4px;
+            font-size:13px;
+        }
+        .bar-field input:focus,
+        .bar-field select:focus{ outline:none; border-color:#14b8a6; }
+
+        .bar-actions{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:8px;
+        }
+        .bar-btn{
+            height:34px;
+            padding:0 10px;
+            color:#e5e7eb;
+            background:#1f2937;
+            border:1px solid #374151;
+            border-radius:4px;
+            font-size:12px;
+            font-weight:700;
+            cursor:pointer;
+        }
+        .bar-btn.primary{ background:#0f766e; border-color:#115e59; color:white; }
+        .bar-btn.save{ background:#2563eb; border-color:#1d4ed8; color:white; }
+        .bar-btn:hover:not(:disabled){ filter:brightness(1.08); }
+        .bar-btn:disabled{ opacity:0.45; cursor:not-allowed; }
+
+        .bar-status{
+            min-height:18px;
+            color:#cbd5e1;
+            font-size:12px;
+            line-height:1.4;
+        }
+        .bar-status.error{ color:#f87171; }
+        .bar-status.success{ color:#4ade80; }
+
+        .bar-summary{
+            display:none;
+            max-height:170px;
+            overflow:auto;
+            border-top:1px solid #253246;
+            padding-top:10px;
+            color:#cbd5e1;
+            font-size:12px;
+            line-height:1.5;
+        }
+        .bar-summary.visible{ display:block; }
+        .bar-summary table{
+            width:100%;
+            border-collapse:collapse;
+        }
+        .bar-summary th,
+        .bar-summary td{
+            padding:5px 4px;
+            text-align:left;
+            border-bottom:1px solid #1f2937;
+        }
+        .bar-summary th{
+            color:#94a3b8;
+            font-size:11px;
+            text-transform:uppercase;
         }
 
         /* ───── Library Button (on upload panel) ───── */
@@ -594,6 +719,7 @@
         </select>
         <button id="measureBtn" class="viewer-btn measure-btn">Measure</button>
         <button id="captureBtn" class="viewer-btn capture-btn">Extract Length</button>
+        <button id="barPanelToggle" class="viewer-btn bar-toggle-btn">Bar Layout</button>
         <form id="viewerSearchForm" class="viewer-search">
             <input id="viewerSearchInput" class="viewer-search-input" type="search" placeholder="Search drawing text" disabled />
             <button id="viewerSearchBtn" class="search-btn" type="submit" disabled>Search</button>
@@ -601,6 +727,56 @@
             <button id="searchNextBtn" class="search-nav-btn" type="button" title="Next result" disabled>&gt;</button>
             <span id="searchStatus" class="search-status"></span>
         </form>
+    </div>
+    <div id="barPanel" class="bar-panel">
+        <div class="bar-header">
+            <h3>Bar Layout</h3>
+            <span id="barPointCount" class="bar-count">0 points</span>
+        </div>
+
+        <div class="bar-controls">
+            <div class="bar-field">
+                <label for="boundaryMode">Shape</label>
+                <select id="boundaryMode">
+                    <option value="polygon">Polygon</option>
+                    <option value="rectangle">Rectangle</option>
+                    <option value="circle">Circle</option>
+                </select>
+            </div>
+            <div class="bar-field">
+                <label for="barDirection">Direction</label>
+                <select id="barDirection">
+                    <option value="Both">Both</option>
+                    <option value="Horizontal">Horizontal</option>
+                    <option value="Vertical">Vertical</option>
+                </select>
+            </div>
+            <div class="bar-field">
+                <label for="barSpacing">Spacing mm</label>
+                <input id="barSpacing" type="number" min="0.01" step="1" value="150" />
+            </div>
+            <div class="bar-field">
+                <label for="unitScaleToMm">Unit scale</label>
+                <input id="unitScaleToMm" type="number" min="0.000001" step="0.001" value="1" />
+            </div>
+            <div class="bar-field">
+                <label for="curveChordMm">Curve chord mm</label>
+                <input id="curveChordMm" type="number" min="1" step="1" value="10" />
+            </div>
+        </div>
+
+        <div class="bar-actions">
+            <button id="drawBoundaryBtn" class="bar-btn primary" disabled>Draw Boundary</button>
+            <button id="closeBoundaryBtn" class="bar-btn" disabled>Close Shape</button>
+            <button id="undoBoundaryPointBtn" class="bar-btn" disabled>Undo Point</button>
+            <button id="generateBarsBtn" class="bar-btn primary" disabled>Generate Bars</button>
+            <button id="autoSelectBoundaryBtn" class="bar-btn primary" disabled>Select Shape</button>
+            <button id="clearBoundaryBtn" class="bar-btn" disabled>Clear</button>
+            <button id="saveBarsBtn" class="bar-btn save" disabled>Save JSON</button>
+        </div>
+
+        <div id="barStatus" class="bar-status">Load a drawing to start.</div>
+        <div id="barSummary" class="bar-summary"></div>
     </div>
     <div id="viewer"></div>
 </div>
