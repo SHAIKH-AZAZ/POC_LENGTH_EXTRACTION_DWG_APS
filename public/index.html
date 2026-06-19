@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>APS Measure Viewer</title>
 
+    <!-- APS Viewer version. To pin for production, replace BOTH "7.*" here and
+         in the viewer3D.min.js <script> tag at the bottom with the same exact
+         version (e.g. 7.108). Keep these two in sync. -->
     <link rel="stylesheet"
         href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css"/>
 
@@ -602,6 +605,7 @@
     <div id="viewer"></div>
 </div>
 
+<!-- APS Viewer version "7.*" must match the style.min.css version in <head>. -->
 <script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js"></script>
 <script type="module" src="/app.js"></script>
 

@@ -40,15 +40,37 @@ function setupDragDrop() {
 
 async function pollStatus(urn) {
     const POLL_MS = 4000;
+    const MAX_MS = 10 * 60 * 1000; // give up after 10 minutes
+    const started = Date.now();
+
+    // A viewable is usable once its derivative is done, even if the
+    // top-level manifest status/progress lags behind (a known APS quirk
+    // where the manifest sits at "99% complete" / "inprogress").
+    const viewableReady = derivatives =>
+        (derivatives || []).some(d =>
+            (d.status === "success" || d.progress === "complete") &&
+            (d.children || []).some(c =>
+                c.role === "2d" || c.role === "3d" || c.type === "geometry")
+        );
 
     while (true) {
         const res = await fetch(`/api/upload/status/${encodeURIComponent(urn)}`);
         const data = await res.json();
 
-        if (data.status === "success") return;
+        if (data.status === "success" ||
+            data.progress === "complete" ||
+            viewableReady(data.derivatives)) {
+            return;
+        }
 
         if (data.status === "failed")
             throw new Error("APS translation failed. Check the file and try again.");
+
+        if (data.status === "timeout")
+            throw new Error("APS translation timed out. The file may be too large or complex.");
+
+        if (Date.now() - started > MAX_MS)
+            throw new Error("Translation is taking too long (stuck). Try re-uploading the file.");
 
         const pctMatch = (data.progress || "").match(/(\d+)%/);
         const pct = pctMatch ? parseInt(pctMatch[1]) : 0;

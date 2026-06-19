@@ -3,15 +3,19 @@ import axios from "axios";
 const APS_BASE = "https://developer.api.autodesk.com";
 
 export async function translateModel(token, objectId) {
-    // Base64-encode the objectId to get the URN (no padding)
-    const urn = Buffer.from(objectId).toString("base64").replace(/=/g, "");
+    // URL-safe Base64-encode the objectId to get the URN (APS requires
+    // URL-safe base64, no padding: + -> -, / -> _, drop "=").
+    const urn = Buffer.from(objectId).toString("base64url");
 
     await axios.post(
         `${APS_BASE}/modelderivative/v2/designdata/job`,
         {
             input: { urn },
             output: {
-                formats: [{ type: "svf2", views: ["2d", "3d"] }]
+                // DWG length extraction works on 2D drawings. Requesting "3d"
+                // for 2D-only DWGs is a known cause of the translation stalling
+                // at "99% complete" while one derivative never finishes.
+                formats: [{ type: "svf2", views: ["2d"] }]
             }
         },
         {

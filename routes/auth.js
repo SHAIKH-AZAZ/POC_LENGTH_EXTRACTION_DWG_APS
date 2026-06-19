@@ -6,11 +6,11 @@ const router = express.Router();
 router.get("/token", async (req, res) => {
     try {
 
-        const token = await getAccessToken();
+        const { access_token, expires_in } = await getAccessToken();
 
         res.json({
-            access_token: token,
-            expires_in: 3600
+            access_token,
+            expires_in
         });
 
     } catch (err) {

@@ -3,6 +3,14 @@ import axios from "axios";
 const APS_BASE = "https://developer.api.autodesk.com";
 
 export function getBucketKey(clientId) {
+    // Use a fixed bucket if configured (APS_BUCKET_KEY), otherwise derive a
+    // unique one from the client ID. Note: bucket keys are globally unique
+    // across all APS accounts, so a generic name like "dwgpdf-bucket" only
+    // works if no one else already owns it.
+    if (process.env.APS_BUCKET_KEY) {
+        return process.env.APS_BUCKET_KEY.toLowerCase();
+    }
+
     return clientId
         .toLowerCase()
         .replace(/[^a-z0-9]/g, "")

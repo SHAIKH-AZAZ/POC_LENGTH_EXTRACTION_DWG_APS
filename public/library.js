@@ -77,13 +77,22 @@ function buildRow(file) {
         ? new Date(file.uploadedAt).toLocaleString()
         : "—";
 
-    const statusClass = `badge-${file.status}`;
-    const statusText = file.status === "inprogress"
-        ? `In Progress (${file.progress})`
-        : file.status.charAt(0).toUpperCase() + file.status.slice(1);
+    // Some filenames arrive with HTML entities baked in (e.g. "&amp;").
+    // Decode them first so they render as real characters, not "&amp;".
+    const displayName = decodeEntities(file.name);
+
+    // A file is openable if APS reports success OR its 2D view is already ready.
+    const isReady = file.status === "success" || file.viewable;
+
+    const statusClass = isReady ? "badge-success" : `badge-${file.status}`;
+    const statusText = isReady
+        ? "Ready"
+        : file.status === "inprogress"
+            ? `In Progress (${file.progress})`
+            : file.status.charAt(0).toUpperCase() + file.status.slice(1);
 
     tr.innerHTML = `
-        <td class="lib-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</td>
+        <td class="lib-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</td>
         <td>${sizeMB} MB</td>
         <td>${dateStr}</td>
         <td><span class="status-badge ${statusClass}">${statusText}</span></td>
@@ -95,8 +104,8 @@ function buildRow(file) {
     const openBtn = document.createElement("button");
     openBtn.className = "lib-btn lib-open";
     openBtn.textContent = "Open";
-    openBtn.disabled = file.status !== "success";
-    openBtn.title = file.status !== "success" ? "Translation not ready" : "Open in viewer";
+    openBtn.disabled = !isReady;
+    openBtn.title = !isReady ? "Translation not ready" : "Open in viewer";
     openBtn.addEventListener("click", () => {
         closeLibrary();
         onOpenCallback?.(file.urn);
@@ -112,7 +121,7 @@ function buildRow(file) {
 }
 
 async function deleteFile(file, tr) {
-    if (!confirm(`Delete "${file.name}" from APS storage?\nThis cannot be undone.`)) return;
+    if (!confirm(`Delete "${decodeEntities(file.name)}" from APS storage?\nThis cannot be undone.`)) return;
 
     try {
         const res = await fetch(`/api/upload/file?urn=${encodeURIComponent(file.urn)}`, { method: "DELETE" });
@@ -128,4 +137,10 @@ function escapeHtml(s) {
     return s.replace(/[&<>"']/g, c => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     }[c]));
+}
+
+function decodeEntities(s) {
+    const txt = document.createElement("textarea");
+    txt.innerHTML = s;
+    return txt.value;
 }

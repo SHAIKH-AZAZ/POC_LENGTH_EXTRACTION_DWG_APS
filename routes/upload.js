@@ -35,7 +35,11 @@ router.post("/", uploader.single("dwg"), async (req, res) => {
 router.get("/status/:urn", async (req, res) => {
     try {
         const manifest = await checkStatus(req.params.urn);
-        res.json({ status: manifest.status, progress: manifest.progress });
+        res.json({
+            status: manifest.status,
+            progress: manifest.progress,
+            derivatives: manifest.derivatives || []
+        });
     } catch (err) {
         console.error("STATUS ERROR:", err.response?.data || err.message);
         res.status(500).json({ error: "Status check failed" });

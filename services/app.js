@@ -22,17 +22,21 @@ async function fetchToken(scopes) {
             headers: { "Content-Type": "application/x-www-form-urlencoded" }
         }
     );
-    return response.data.access_token;
+    // { access_token, expires_in, token_type }
+    return response.data;
 }
 
-// Public viewer token (exposed to browser)
+// Public viewer token (exposed to browser) — include the real expiry so the
+// viewer schedules its token refresh correctly.
 export async function getAccessToken() {
-    return fetchToken(["viewables:read"]);
+    const data = await fetchToken(["viewables:read"]);
+    return { access_token: data.access_token, expires_in: data.expires_in };
 }
 
 // Internal token for OSS + Model Derivative (server-side only)
 export async function getInternalToken() {
-    return fetchToken(["bucket:create", "bucket:read", "data:write", "data:read"]);
+    const data = await fetchToken(["bucket:create", "bucket:read", "data:write", "data:read"]);
+    return data.access_token;
 }
 
 // Wrapper functions for routes/upload.js
@@ -68,14 +72,23 @@ export async function listFiles(limit = 10, offset = 0, statusFilter = "all") {
 
     // Get translation status for each
     const enriched = await Promise.all(items.map(async item => {
-        const urn = Buffer.from(item.objectId).toString("base64").replace(/=/g, "");
+        const urn = Buffer.from(item.objectId).toString("base64url");
         let status = "pending";
         let progress = "0%";
+        let viewable = false;
 
         try {
             const manifest = await getManifest(token, urn);
             status = manifest.status || "pending";
             progress = manifest.progress || "0%";
+            // A 2D viewable can be ready even while the top-level manifest
+            // sits at "inprogress / 99%" (known APS behavior). Detect it so
+            // the file is openable instead of stuck forever.
+            viewable = (manifest.derivatives || []).some(d =>
+                (d.status === "success" || d.progress === "complete") &&
+                (d.children || []).some(c =>
+                    c.role === "2d" || c.role === "3d" || c.type === "geometry")
+            );
         } catch (err) {
             if (err.response?.status !== 404) {
                 console.error("Manifest check failed for", urn, err.message);
@@ -93,7 +106,8 @@ export async function listFiles(limit = 10, offset = 0, statusFilter = "all") {
             size: item.size,
             uploadedAt,
             status,
-            progress
+            progress,
+            viewable
         };
     }));
 
@@ -119,7 +133,7 @@ export async function deleteFile(urn) {
 
     // Decode URN to get objectId, then extract objectKey
     const cleanUrn = urn.replace(/^urn:/, "");
-    const objectId = Buffer.from(cleanUrn, "base64").toString("utf8");
+    const objectId = Buffer.from(cleanUrn, "base64url").toString("utf8");
     // objectId format: urn:adsk.objects:os.object:bucketKey/objectKey
     const objectKey = objectId.split("/").slice(1).join("/");
 
