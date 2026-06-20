@@ -693,10 +693,21 @@ export function launch(urn) {
 
                     measureExt = await viewer.loadExtension("Autodesk.Measure");
 
+                    // Force length display + captured values to millimetres (DWG sheet defaults to metres)
+                    if (measureExt.setUnits) {
+                        measureExt.setUnits("mm");
+                    }
+                    if (measureExt.setPrecision) {
+                        measureExt.setPrecision(0);
+                    }
+
                     viewSelect.onchange = () => {
                         const selected = viewables[Number(viewSelect.value)];
                         if (selected) {
-                            loadViewable(selected).catch(console.error);
+                            loadViewable(selected).then(() => {
+                                measureExt?.setUnits?.("mm");
+                                measureExt?.setPrecision?.(0);
+                            }).catch(console.error);
                         }
                     };
 
