@@ -4,6 +4,7 @@ import authRoute from "./routes/auth.js";
 import measurementRoute from "./routes/measurements.js";
 import uploadRoute from "./routes/upload.js";
 import barLayoutRoute from "./routes/bar-layouts.js";
+import hatchRoute from "./routes/hatch.js";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/measurements", measurementRoute);
 app.use("/api/upload", uploadRoute);
 app.use("/api/bar-layouts", barLayoutRoute);
+app.use("/api/hatch", hatchRoute);
 
 const PORT = 3000;
 

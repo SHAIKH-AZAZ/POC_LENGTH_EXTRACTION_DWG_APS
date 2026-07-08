@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <!-- Point at any AutoCAD 2024 install or the ObjectARX 2024 SDK inc/ folder:
+         dotnet build -p:AcadRefDir="C:\path\to\refs\" -->
+    <AcadRefDir Condition="'$(AcadRefDir)' == ''">C:\Program Files\Autodesk\AutoCAD 2024\</AcadRefDir>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core-console-safe references only; no acmgd (desktop UI assembly). -->
+    <Reference Include="accoremgd">
+      <HintPath>$(AcadRefDir)accoremgd.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="acdbmgd">
+      <HintPath>$(AcadRefDir)acdbmgd.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+
+</Project>

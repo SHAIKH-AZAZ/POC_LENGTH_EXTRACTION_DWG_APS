@@ -61,30 +61,20 @@ export async function deleteObject(token, bucketKey, objectKey) {
     );
 }
 
-export async function uploadToOSS(token, bucketKey, fileName, fileBuffer) {
-    await ensureBucket(token, bucketKey);
-
-    const objectKey  = `${Date.now()}_${fileName}`;
-    const encodedKey = encodeURIComponent(objectKey);
-
-    // Step 1: Request signed S3 upload URL
-    const signedRes = await axios.get(
-        `${APS_BASE}/oss/v2/buckets/${bucketKey}/objects/${encodedKey}/signeds3upload?minutesExpiration=60`,
+// Request a signed S3 upload URL. The returned url accepts a plain PUT from
+// any client (including a Design Automation workitem); the object only
+// materializes in OSS after completeSignedUpload is called.
+export async function createSignedUpload(token, bucketKey, objectKey, minutesExpiration = 60) {
+    const res = await axios.get(
+        `${APS_BASE}/oss/v2/buckets/${bucketKey}/objects/${encodeURIComponent(objectKey)}/signeds3upload?minutesExpiration=${minutesExpiration}`,
         { headers: { Authorization: `Bearer ${token}` } }
     );
+    return { uploadKey: res.data.uploadKey, url: res.data.urls[0] };
+}
 
-    const { uploadKey, urls } = signedRes.data;
-
-    // Step 2: PUT file to S3 URL
-    await axios.put(urls[0], fileBuffer, {
-        headers: { "Content-Type": "application/octet-stream" },
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity
-    });
-
-    // Step 3: Complete the upload
-    const completeRes = await axios.post(
-        `${APS_BASE}/oss/v2/buckets/${bucketKey}/objects/${encodedKey}/signeds3upload`,
+export async function completeSignedUpload(token, bucketKey, objectKey, uploadKey) {
+    const res = await axios.post(
+        `${APS_BASE}/oss/v2/buckets/${bucketKey}/objects/${encodeURIComponent(objectKey)}/signeds3upload`,
         { uploadKey },
         {
             headers: {
@@ -93,6 +83,29 @@ export async function uploadToOSS(token, bucketKey, fileName, fileBuffer) {
             }
         }
     );
+    return res.data.objectId;
+}
 
-    return completeRes.data.objectId;
+export async function getSignedDownloadUrl(token, bucketKey, objectKey, minutesExpiration = 60) {
+    const res = await axios.get(
+        `${APS_BASE}/oss/v2/buckets/${bucketKey}/objects/${encodeURIComponent(objectKey)}/signeds3download?minutesExpiration=${minutesExpiration}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res.data.url;
+}
+
+export async function uploadToOSS(token, bucketKey, fileName, fileBuffer) {
+    await ensureBucket(token, bucketKey);
+
+    const objectKey = `${Date.now()}_${fileName}`;
+
+    const { uploadKey, url } = await createSignedUpload(token, bucketKey, objectKey);
+
+    await axios.put(url, fileBuffer, {
+        headers: { "Content-Type": "application/octet-stream" },
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity
+    });
+
+    return completeSignedUpload(token, bucketKey, objectKey, uploadKey);
 }

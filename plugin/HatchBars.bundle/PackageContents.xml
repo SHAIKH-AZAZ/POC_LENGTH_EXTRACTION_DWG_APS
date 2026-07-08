@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0" ProductType="Application" Name="HatchBars"
+    AppVersion="1.0.0" Description="Bar layout computation" Author="POC">
+  <CompanyDetails Name="POC" />
+  <Components>
+    <RuntimeRequirements OS="Win64" Platform="AutoCAD" SeriesMin="R24.3" SeriesMax="R24.3" />
+    <ComponentEntry AppName="HatchBars" ModuleName="./Contents/HatchBarsPlugin.dll"
+        AppDescription="Bar layout computation" LoadOnCommandInvocation="True"
+        LoadOnAutoCADStartup="True">
+      <Commands GroupName="HATCHBARS">
+        <Command Global="AUTOHATCH" Local="AUTOHATCH" />
+      </Commands>
+    </ComponentEntry>
+  </Components>
+</ApplicationPackage>

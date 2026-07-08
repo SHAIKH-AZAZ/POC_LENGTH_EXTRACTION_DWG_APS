@@ -120,6 +120,34 @@ http://localhost:3000
 
 ---
 
+## ☁️ Cloud Bar Generation (Design Automation)
+
+Runs the AUTOHATCH bar-fill **inside AutoCAD on APS Design Automation** — the
+computation uses the real DWG entity (exact arcs/splines), not the viewer mesh.
+
+Flow: select a closed polyline/circle in the viewer → **Generate in Cloud** →
+backend submits a DA workitem (`POST /api/hatch`, polled via
+`GET /api/hatch/:id`) → plugin computes bar lengths → result renders in the
+same summary/overlay and saves through the existing **Save JSON** flow.
+
+Setup (one-time, and after every plugin rebuild):
+
+```bash
+# 1. Build the plugin DLL on Windows — see plugin/README.md
+# 2. Provision appbundle + activity + aliases:
+node scripts/setup-da.js
+```
+
+No new env vars required (`APS_CLIENT_ID`/`APS_CLIENT_SECRET`; app needs the
+Design Automation API enabled). Optional: `DA_ENGINE` (default
+`Autodesk.AutoCAD+24_3`).
+
+Limitations (POC): jobs tracked in memory (lost on restart), polling only (no
+webhooks), local dev only (not Vercel-compatible), source DWG must still be in
+OSS (transient bucket, 24 h).
+
+---
+
 ## 🔐 Security Notes
 
 The following are ignored via `.gitignore`:

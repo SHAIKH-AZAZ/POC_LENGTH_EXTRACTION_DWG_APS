@@ -9,7 +9,18 @@
       "Bash(node -c services/app.js)",
       "Bash(node -c services/oss.js)",
       "Bash(node -c services/modelderivative.js)",
-      "Bash(node -c routes/upload.js)"
+      "Bash(node -c routes/upload.js)",
+      "Bash(node -e ' *)",
+      "Bash(node \"/tmp/claude-1000/-home-azaz-Desktop-code-POC-ZIP-FILES-POC-2-POC-LENGTH-EXTRACTION-DWG-APS/1225b308-3b1d-4d2e-b916-eec84ceaef00/scratchpad/test-signed-roundtrip.js\")",
+      "Bash(zip -r HatchBars.bundle.zip HatchBars.bundle)",
+      "Bash(unzip -l HatchBars.bundle.zip)",
+      "Bash(node scripts/setup-da.js)",
+      "Bash(node --check public/viewer.js)",
+      "Bash(node --check routes/hatch.js)",
+      "Bash(node --check services/designautomation.js)",
+      "Bash(node --check scripts/setup-da.js)",
+      "Bash(node --check services/oss.js)",
+      "Bash(pkill -fx \"node server.js\")"
     ]
   }
 }

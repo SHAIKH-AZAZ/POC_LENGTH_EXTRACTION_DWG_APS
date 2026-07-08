@@ -103,6 +103,18 @@ async function getVerticesFromSelectedEntity(viewer, dbId) {
     });
 }
 
+// DWG entity handle: for DWG-derived models the viewer property externalId
+// is the entity's hex handle — what the Design Automation plugin needs.
+function getExternalId(model, dbId) {
+    return new Promise((resolve, reject) => {
+        model.getProperties(
+            dbId,
+            result => resolve(result.externalId),
+            () => reject(new Error("Could not read entity properties."))
+        );
+    });
+}
+
 async function getToken(callback) {
     const res = await fetch("/api/auth/token");
     const data = await res.json();
@@ -267,6 +279,7 @@ function getBarElements() {
         undoBtn: document.getElementById("undoBoundaryPointBtn"),
         generateBtn: document.getElementById("generateBarsBtn"),
         autoSelectBtn: document.getElementById("autoSelectBoundaryBtn"),
+        cloudBtn: document.getElementById("cloudGenerateBtn"),
         clearBtn: document.getElementById("clearBoundaryBtn"),
         saveBtn: document.getElementById("saveBarsBtn"),
         status: document.getElementById("barStatus"),
@@ -282,6 +295,7 @@ function setBarControlsLoading(message) {
     el.undoBtn.disabled = true;
     el.generateBtn.disabled = true;
     el.autoSelectBtn.disabled = true;
+    el.cloudBtn.disabled = true;
     el.clearBtn.disabled = true;
     el.saveBtn.disabled = true;
     el.pointCount.textContent = "0 points";
@@ -304,6 +318,7 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
     let currentLayout = null;
     let activeBoundaryPoints = null;
     let activeBoundaryClosed = false;
+    let cloudBusy = false;
 
     viewer.toolController.registerTool(tool);
 
@@ -347,6 +362,7 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
         
         const selection = viewer.getSelection();
         el.autoSelectBtn.disabled = !(selection && selection.length === 1);
+        el.cloudBtn.disabled = cloudBusy || !(selection && selection.length === 1);
     }
 
     function updateBoundaryState(state) {
@@ -591,6 +607,83 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
             setBarStatus(err.message || "Could not extract boundary geometry.", "error");
         }
         updateButtons();
+    };
+
+    el.cloudBtn.onclick = async () => {
+        const selection = viewer.getSelection();
+        if (!selection || selection.length !== 1) {
+            setBarStatus("Please select exactly one element in the drawing first.", "error");
+            return;
+        }
+
+        const dbId = selection[0];
+        cloudBusy = true;
+        updateButtons();
+        setBarStatus("Reading entity id...");
+
+        try {
+            const externalId = await getExternalId(viewer.model, dbId);
+            if (!/^[0-9A-Fa-f]{1,16}$/.test(externalId || "")) {
+                throw new Error(
+                    "Selected entity has no usable DWG handle — pick a single closed " +
+                    "polyline or circle (not inside a block/xref).");
+            }
+
+            const settings = readSettings();
+            setBarStatus("Submitting cloud job...");
+
+            const submitRes = await fetch("/api/hatch", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    urn,
+                    boundaryHandle: externalId,
+                    direction: settings.direction,
+                    spacingMm: settings.spacingMm,
+                    unitScaleToMm: settings.unitScaleToMm
+                })
+            });
+            const submitData = await submitRes.json().catch(() => ({}));
+            if (!submitRes.ok) throw new Error(submitData.error || "Cloud submit failed");
+
+            // Poll every 3s, up to ~5 min.
+            let layout = null;
+            for (let tick = 1; tick <= 100; tick++) {
+                await new Promise(r => setTimeout(r, 3000));
+                const pollRes = await fetch(`/api/hatch/${submitData.workitemId}`);
+                const poll = await pollRes.json().catch(() => ({}));
+                if (!pollRes.ok) throw new Error(poll.error || "Cloud status check failed");
+
+                if (poll.status === "success") {
+                    layout = poll.layout;
+                    break;
+                }
+                if (poll.status === "failed") {
+                    console.error("Cloud job report:\n" + (poll.report || "(no report)"));
+                    throw new Error(`Cloud job failed (${poll.error}) — see console for report.`);
+                }
+                setBarStatus(`Cloud job ${poll.status}... (${tick * 3}s)`);
+            }
+            if (!layout) throw new Error("Cloud job timed out after 5 minutes.");
+
+            viewer.toolController.deactivateTool(tool.getName());
+            tool.clear();
+            overlay.clearAll();
+
+            overlay.setBoundary(layout.boundary, true);
+            activeBoundaryPoints = layout.boundary;
+            activeBoundaryClosed = true;
+
+            setCurrentLayout(layout);
+            overlay.setBars(layout);
+            renderSummary(layout);
+            setBarStatus(`Cloud generated ${layout.details.length} bars.`, "success");
+        } catch (err) {
+            setBarStatus(err.message || "Cloud generate failed.", "error");
+        } finally {
+            cloudBusy = false;
+            updateButtons();
+        }
     };
 
     // Selection changed listener to dynamically enable/disable the 'Select Shape' button

@@ -7,7 +7,7 @@ dotenv.config();
 
 const APS_BASE = "https://developer.api.autodesk.com";
 
-async function fetchToken(scopes) {
+export async function fetchToken(scopes) {
     const response = await axios.post(
         `${APS_BASE}/authentication/v2/token`,
         new URLSearchParams({
