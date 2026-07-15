@@ -219,7 +219,12 @@ export class BoundaryDrawTool {
     }
 
     handleMouseMove(event) {
-        if (this.closed || !this.points.length) return false;
+        if (this.closed) return false;
+
+        // Always render the OSNAP indicator, even before the first point.
+        this.renderSnapIndicator();
+
+        if (!this.points.length) return false;
 
         let point = this.getSnappedOrModelPoint(event);
         if (!point) return false;
@@ -233,12 +238,48 @@ export class BoundaryDrawTool {
         return false;
     }
 
+    // Draw / refresh the snap marker (OSNAP-style visual feedback).
+    renderSnapIndicator() {
+        const indicator = this.snapper?.indicator;
+        if (!indicator) return;
+        indicator.clearOverlays?.();
+        if (this.snapper.isSnapped()) {
+            indicator.render?.();
+        }
+        this.viewer.impl?.invalidate?.(false, false, true);
+    }
+
+    // Resolve the snapped point for all OSNAP types, not just vertices:
+    // endpoint/vertex, midpoint, intersection, circle centre, nearest-on-edge.
+    extractSnapPoint(result) {
+        if (!result) return null;
+        const SnapType = globalThis.Autodesk?.Viewing?.MeasureCommon?.SnapType;
+        const geometry = result.getGeometry?.();
+
+        if (SnapType) {
+            switch (result.geomType) {
+                case SnapType.SNAP_VERTEX:
+                case SnapType.SNAP_MIDPOINT:
+                case SnapType.SNAP_INTERSECTION:
+                case SnapType.SNAP_CIRCLE_CENTER:
+                    return geometry || result.geomVertex || null;
+                case SnapType.SNAP_CIRCULARARC:
+                    return result.circularArcCenter || result.intersectPoint || result.geomVertex || null;
+                case SnapType.SNAP_EDGE:
+                case SnapType.SNAP_CURVEDEDGE:
+                    return result.intersectPoint || result.geomVertex || null;
+                default:
+                    break;
+            }
+        }
+
+        return result.geomVertex || result.intersectPoint || null;
+    }
+
     getSnappedOrModelPoint(event) {
         if (this.snapper && this.snapper.isSnapped()) {
-            const result = this.snapper.getSnapResult();
-            if (result && result.geomVertex) {
-                return clonePoint(result.geomVertex);
-            }
+            const snapPoint = this.extractSnapPoint(this.snapper.getSnapResult());
+            if (snapPoint) return clonePoint(snapPoint);
         }
         return this.getModelPoint(event);
     }

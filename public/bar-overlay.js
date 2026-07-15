@@ -42,8 +42,20 @@ export class ViewerBarOverlay {
             opacity,
             transparent: opacity < 1,
             depthTest: false,
-            depthWrite: false
+            depthWrite: false,
+            linewidth: 3 // honoured where the platform supports it
         });
+    }
+
+    // Pixel-sized world offset at current zoom, used to fake thicker lines.
+    pixelWorldSize() {
+        const cam = this.viewer.navigation?.getCamera?.();
+        const canvas = this.viewer.canvas || this.viewer.impl?.canvas;
+        if (!cam?.isPerspective && cam && canvas?.clientHeight) {
+            const worldHeight = (cam.top - cam.bottom) / (cam.zoom || 1);
+            return worldHeight / canvas.clientHeight;
+        }
+        return 0;
     }
 
     makeLine(points, color, opacity = 1, close = false) {
@@ -142,13 +154,22 @@ export class ViewerBarOverlay {
 
         const colors = this.getContrastColors();
 
+        const px = this.pixelWorldSize();
+        const offsets = px > 0 ? [0, px, -px] : [0]; // triple pass ~3px thick
+
         if (points.length > 1) {
-            this.addObject(this.makeLine(points, colors.boundaryColor, 1, closed), this.boundaryObjects);
+            for (const o of offsets) {
+                const shifted = points.map(p => ({ x: p.x + o, y: p.y + o, z: p.z }));
+                this.addObject(this.makeLine(shifted, colors.boundaryColor, 1, closed), this.boundaryObjects);
+            }
         }
 
         if (!closed && previewPoints.length > 1) {
             const isClosedPreview = previewPoints.length > 2;
-            this.addObject(this.makeLine(previewPoints, colors.previewColor, 0.75, isClosedPreview), this.boundaryObjects);
+            for (const o of offsets) {
+                const shifted = previewPoints.map(p => ({ x: p.x + o, y: p.y + o, z: p.z }));
+                this.addObject(this.makeLine(shifted, colors.previewColor, 1, isClosedPreview), this.boundaryObjects);
+            }
         }
 
         for (const point of points) {
