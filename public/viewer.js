@@ -327,6 +327,69 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
         el.status.className = tone ? `bar-status ${tone}` : "bar-status";
     }
 
+    function noBarsHint(points, settings) {
+        const xs = points.map((p) => p.x);
+        const ys = points.map((p) => p.y);
+        const w = Math.max(...xs) - Math.min(...xs);
+        const h = Math.max(...ys) - Math.min(...ys);
+        const spacingDrawing = settings.spacingMm / settings.unitScaleToMm;
+        return `No bars: boundary is ${w.toFixed(2)} x ${h.toFixed(2)} drawing units but spacing = ${spacingDrawing} units. Reduce spacing or raise unit scale (e.g. 1000 if the drawing is in meters).`;
+    }
+
+    const FALLBACK_UNIT_SCALE_TO_MM = 1000; // assume metres when the DWG has no unit metadata
+
+    function detectUnitScaleToMm() {
+        const unit = viewer.model?.getUnitString?.();
+        const toMeters = viewer.model?.getUnitScale?.();
+        if (!unit || !Number.isFinite(toMeters) || toMeters <= 0) {
+            return { scale: FALLBACK_UNIT_SCALE_TO_MM, unit: null };
+        }
+        return { scale: toMeters * 1000, unit };
+    }
+
+    function applyDetectedUnitScale() {
+        const { scale, unit } = detectUnitScaleToMm();
+        console.log(`[BarLayout] Unit detection: unit=${unit || "(none)"}, scaleToMm=${scale}`);
+        el.unitScale.value = Number(scale.toFixed(6));
+        setBarStatus(unit
+            ? `Drawing units detected: ${unit}. Unit Scale set to ${el.unitScale.value} mm/unit (editable).`
+            : `No unit info in drawing. Unit Scale defaulted to ${el.unitScale.value} (1 unit = 1 m). Edit if the drawing uses other units.`);
+        syncToolSettings();
+    }
+
+    // Generate bars; if the unit scale is clearly wrong, auto-correct it.
+    // 0 bars while spacing exceeds the boundary => drawing units are bigger
+    // than assumed (metres vs mm): retry with scale x1000. "Too many bars"
+    // => scale too large: retry with scale /1000.
+    function generateWithAutoScale(points, settings) {
+        const attempt = (unitScaleToMm) => {
+            const s = { ...settings, unitScaleToMm };
+            return { layout: generateBarLayout(points, s), settings: s };
+        };
+
+        try {
+            const first = attempt(settings.unitScaleToMm);
+            if (first.layout.details.length) return first;
+
+            try {
+                const retry = attempt(settings.unitScaleToMm * 1000);
+                if (retry.layout.details.length) return { ...retry, corrected: true };
+            } catch (_err) { /* keep first result */ }
+
+            return first;
+        } catch (err) {
+            if (/too many bars/i.test(err.message || "")) {
+                const retry = attempt(settings.unitScaleToMm / 1000);
+                if (retry.layout.details.length) return { ...retry, corrected: true };
+            }
+            throw err;
+        }
+    }
+
+    function applyCorrectedScale(usedSettings) {
+        el.unitScale.value = Number(usedSettings.unitScaleToMm.toFixed(6));
+    }
+
     function readSettings() {
         return {
             shapeMode: el.mode.value,
@@ -501,8 +564,8 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
                 throw new Error("Please complete a closed boundary first.");
             }
 
-            const settings = readSettings();
-            const layout = generateBarLayout(pointsToUse, settings);
+            const requested = readSettings();
+            const { layout, settings, corrected } = generateWithAutoScale(pointsToUse, requested);
             const enrichedLayout = {
                 ...layout,
                 settings: {
@@ -517,7 +580,10 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
             renderSummary(enrichedLayout);
 
             if (!enrichedLayout.details.length) {
-                setBarStatus("No bars generated for this spacing.", "error");
+                setBarStatus(noBarsHint(pointsToUse, settings), "error");
+            } else if (corrected) {
+                applyCorrectedScale(settings);
+                setBarStatus(`Generated ${enrichedLayout.details.length} bars. Unit Scale auto-corrected to ${el.unitScale.value} (drawing appears to be in ${settings.unitScaleToMm >= 1000 ? "metres" : "mm"}).`, "success");
             } else {
                 setBarStatus(`Generated ${enrichedLayout.details.length} bars.`, "success");
             }
@@ -578,8 +644,8 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
             activeBoundaryClosed = true;
             
             // Generate the layout using captured points and active UI settings
-            const settings = readSettings();
-            const layout = generateBarLayout(points, settings);
+            const requested = readSettings();
+            const { layout, settings, corrected } = generateWithAutoScale(points, requested);
             const enrichedLayout = {
                 ...layout,
                 settings: {
@@ -594,7 +660,10 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
             renderSummary(enrichedLayout);
 
             if (!enrichedLayout.details.length) {
-                setBarStatus("No bars generated for this spacing.", "error");
+                setBarStatus(noBarsHint(points, settings), "error");
+            } else if (corrected) {
+                applyCorrectedScale(settings);
+                setBarStatus(`Extracted boundary and generated ${enrichedLayout.details.length} bars. Unit Scale auto-corrected to ${el.unitScale.value}.`, "success");
             } else {
                 setBarStatus(`Successfully extracted boundary and generated ${enrichedLayout.details.length} bars.`, "success");
             }
@@ -694,6 +763,8 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
     syncToolSettings();
     setBarStatus("Ready to draw a boundary.");
 
+    applyDetectedUnitScale();
+
     return {
         resetForViewChange() {
             viewer.toolController.deactivateTool(tool.getName());
@@ -704,6 +775,7 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
             setBarStatus("Ready to draw a boundary.");
             updateButtons();
         },
+        refreshUnitScale: applyDetectedUnitScale,
         deactivateDrawing() {
             viewer.toolController.deactivateTool(tool.getName());
         }
@@ -777,6 +849,7 @@ export function launch(urn) {
                     viewer.fitToView();
                     viewSelect.disabled = viewables.length <= 1;
                     setSearchReady(true);
+                    barLayoutControls?.refreshUnitScale();
                 }
 
                 populateViewSelect(viewSelect, viewables, initialIndex);

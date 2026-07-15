@@ -133,7 +133,7 @@ same summary/overlay and saves through the existing **Save JSON** flow.
 Setup (one-time, and after every plugin rebuild):
 
 ```bash
-# 1. Build the plugin DLL on Windows — see plugin/README.md
+# 1. Build the plugin DLL (any OS, just needs .NET SDK) — see plugin/README.md
 # 2. Provision appbundle + activity + aliases:
 node scripts/setup-da.js
 ```

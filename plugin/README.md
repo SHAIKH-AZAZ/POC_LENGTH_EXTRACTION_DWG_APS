@@ -5,16 +5,23 @@ Design Automation. Headless port of the desktop `hatch_automation` plugin:
 no prompts (reads `params.json`), no entity creation (pure computation),
 writes `result.json` matching the web client's `generateBarLayout()` schema.
 
-## Build (Windows)
+## Build (any OS — Linux works)
 
-Requires Visual Studio 2022 **or** the .NET SDK, plus AutoCAD 2024 managed
-references (`accoremgd.dll`, `acdbmgd.dll`) from either:
+Requires only the .NET SDK. AutoCAD references come from the official
+`AutoCAD.NET` NuGet package (24.3.0) — **no AutoCAD install or ObjectARX SDK
+needed**, and since the references are compile-only the DLL builds fine on
+Linux (an installed AutoCAD 2027 won't help anyway: its managed DLLs are
+.NET 10, incompatible with the net48 DA engine).
 
-- an AutoCAD 2024 installation (`C:\Program Files\Autodesk\AutoCAD 2024\`), or
-- the free [ObjectARX 2024 SDK](https://aps.autodesk.com/developer/overview/autocad) (`inc\` folder)
+```bash
+cd plugin/HatchBarsPlugin
+dotnet build -c Release
+```
+
+Optional: build against a local AutoCAD 2021–2024 install or ObjectARX 2024
+SDK instead of NuGet:
 
 ```powershell
-cd plugin\HatchBarsPlugin
 dotnet build -c Release -p:AcadRefDir="C:\Program Files\Autodesk\AutoCAD 2024\"
 ```
 
@@ -22,13 +29,10 @@ dotnet build -c Release -p:AcadRefDir="C:\Program Files\Autodesk\AutoCAD 2024\"
 
 The zip must contain the `HatchBars.bundle` folder at its root:
 
-```powershell
-copy bin\Release\HatchBarsPlugin.dll ..\HatchBars.bundle\Contents\
-cd ..
-Compress-Archive -Path HatchBars.bundle -DestinationPath HatchBars.bundle.zip -Force
+```bash
+cp HatchBarsPlugin/bin/Release/HatchBarsPlugin.dll HatchBars.bundle/Contents/
+cd plugin && rm -f HatchBars.bundle.zip && zip -r HatchBars.bundle.zip HatchBars.bundle
 ```
-
-(On Linux, for the placeholder/smoke-test zip: `cd plugin && zip -r HatchBars.bundle.zip HatchBars.bundle`)
 
 ## Upload to Design Automation
 

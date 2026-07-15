@@ -10,7 +10,11 @@ namespace HatchBarsPlugin
     {
         public static T Read<T>(string path)
         {
-            using (var stream = File.OpenRead(path))
+            // Design Automation may save inline data: URL args as UTF-16 with a
+            // BOM; ReadAllText auto-detects that, then re-encode as UTF-8 for
+            // the serializer.
+            var text = File.ReadAllText(path);
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(text)))
             {
                 var serializer = new DataContractJsonSerializer(typeof(T));
                 return (T)serializer.ReadObject(stream);

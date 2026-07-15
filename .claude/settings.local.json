@@ -20,7 +20,27 @@
       "Bash(node --check services/designautomation.js)",
       "Bash(node --check scripts/setup-da.js)",
       "Bash(node --check services/oss.js)",
-      "Bash(pkill -fx \"node server.js\")"
+      "Bash(pkill -fx \"node server.js\")",
+      "Read(//run/media/azaz/C862E83062E82542/**)",
+      "Read(//run/media/azaz/C862E83062E82542/Program Files/Autodesk/**)",
+      "Bash(curl -s \"https://api.nuget.org/v3-flatcontainer/autocad.net/index.json\")",
+      "Bash(command -v dotnet)",
+      "Bash(curl -sSL https://dot.net/v1/dotnet-install.sh -o /home/azaz/.cache/dotnet-install.sh)",
+      "Bash(bash /home/azaz/.cache/dotnet-install.sh --channel 8.0 --install-dir /home/azaz/.dotnet)",
+      "Bash(/home/azaz/.dotnet/dotnet build *)",
+      "Bash(command -v dwgread dwg2dxf)",
+      "Bash(python3 -c \"import ezdxf; print\\('ezdxf', ezdxf.__version__\\)\")",
+      "Bash(dwgread -O json -o beam.json \"/home/azaz/Desktop/code/POC ZIP FILES/POC-2/HATCH AUTOMATION/beam_rebar.dwg\")",
+      "Bash(python3 -c ' *)",
+      "Bash(node --env-file=.env \"/tmp/claude-1000/-home-azaz-Desktop-code-POC-ZIP-FILES-POC-2-POC-LENGTH-EXTRACTION-DWG-APS/1225b308-3b1d-4d2e-b916-eec84ceaef00/scratchpad/e2e.mjs\")",
+      "Bash(node --env-file=.env -e ' *)",
+      "Bash(python3 - /tmp/claude-1000/-home-azaz-Desktop-code-POC-ZIP-FILES-POC-2-POC-LENGTH-EXTRACTION-DWG-APS/1225b308-3b1d-4d2e-b916-eec84ceaef00/scratchpad/e2e.mjs)",
+      "Bash(node --env-file=.env /tmp/claude-1000/-home-azaz-Desktop-code-POC-ZIP-FILES-POC-2-POC-LENGTH-EXTRACTION-DWG-APS/1225b308-3b1d-4d2e-b916-eec84ceaef00/scratchpad/e2e.mjs)",
+      "Bash(cp HatchBarsPlugin/bin/Release/HatchBarsPlugin.dll HatchBars.bundle/Contents/)",
+      "Bash(rm -f HatchBars.bundle.zip)",
+      "Bash(zip -rq HatchBars.bundle.zip HatchBars.bundle)",
+      "Read(//home/azaz/Desktop/code/POC ZIP FILES/POC-2/**)",
+      "Bash(python3 *)"
     ]
   }
 }

@@ -26,7 +26,7 @@ export async function ensureBucket(token, bucketKey) {
         if (err.response?.status === 404) {
             await axios.post(
                 `${APS_BASE}/oss/v2/buckets`,
-                { bucketKey, policyKey: "transient" },
+                { bucketKey, policyKey: "persistent" },
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

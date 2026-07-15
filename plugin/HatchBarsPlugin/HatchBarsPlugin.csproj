@@ -4,13 +4,18 @@
     <TargetFramework>net48</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <LangVersion>latest</LangVersion>
-    <!-- Point at any AutoCAD 2024 install or the ObjectARX 2024 SDK inc/ folder:
+    <!-- Default: official Autodesk ref assemblies from NuGet (no AutoCAD install needed).
+         To build against a local AutoCAD 2024 install / ObjectARX 2024 SDK instead:
          dotnet build -p:AcadRefDir="C:\path\to\refs\" -->
-    <AcadRefDir Condition="'$(AcadRefDir)' == ''">C:\Program Files\Autodesk\AutoCAD 2024\</AcadRefDir>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(AcadRefDir)' == ''">
+    <!-- ExcludeAssets=runtime: compile-only, nothing copied to output (engine provides DLLs). -->
+    <PackageReference Include="AutoCAD.NET" Version="24.3.*" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(AcadRefDir)' != ''">
     <!-- Core-console-safe references only; no acmgd (desktop UI assembly). -->
     <Reference Include="accoremgd">
       <HintPath>$(AcadRefDir)accoremgd.dll</HintPath>
@@ -20,7 +25,12 @@
       <HintPath>$(AcadRefDir)acdbmgd.dll</HintPath>
       <Private>false</Private>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="System.Runtime.Serialization" />
+    <!-- net48 reference assemblies via NuGet, so no .NET Framework targeting pack install needed. -->
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
