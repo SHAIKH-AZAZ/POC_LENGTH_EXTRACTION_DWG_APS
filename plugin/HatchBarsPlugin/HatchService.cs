@@ -57,7 +57,9 @@ namespace HatchBarsPlugin
 
                 if (direction == "Horizontal" || direction == "Both")
                 {
-                    for (double y = minY; y <= maxY + 1e-9; y += spacingDrawing)
+                    // Interior scan lines only (start at min + spacing, exclude max)
+                    // to match the web app's bar-layout.js scanPositions().
+                    for (double y = minY + spacingDrawing; y < maxY - 1e-9; y += spacingDrawing)
                     {
                         using (var testLine = new Line(
                             new Point3d(minX - xPadding, y, 0),
@@ -71,7 +73,8 @@ namespace HatchBarsPlugin
 
                 if (direction == "Vertical" || direction == "Both")
                 {
-                    for (double x = minX; x <= maxX + 1e-9; x += spacingDrawing)
+                    // Interior scan lines only, matching the web app.
+                    for (double x = minX + spacingDrawing; x < maxX - 1e-9; x += spacingDrawing)
                     {
                         using (var testLine = new Line(
                             new Point3d(x, minY - yPadding, 0),

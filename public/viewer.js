@@ -338,6 +338,21 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
 
     const FALLBACK_UNIT_SCALE_TO_MM = 1000; // assume metres when the DWG has no unit metadata
 
+    // Page-to-model scale for ONE specific 2D viewport — the viewport the
+    // boundary points were actually picked in. This mirrors what the Measure
+    // extension does; using any other viewport's transform gives wrong lengths.
+    function getPageToModelScale(vpId) {
+        const model = viewer.model;
+        if (!model?.is2d?.() || vpId === null || vpId === undefined) return null;
+        try {
+            const tf = model.getPageToModelTransform?.(vpId);
+            const s = tf?.getMaxScaleOnAxis?.();
+            return (Number.isFinite(s) && s > 0) ? s : null;
+        } catch (_err) {
+            return null;
+        }
+    }
+
     function detectUnitScaleToMm() {
         const unit = viewer.model?.getUnitString?.();
         const toMeters = viewer.model?.getUnitScale?.();
@@ -355,6 +370,23 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
             ? `Drawing units detected: ${unit}. Unit Scale set to ${el.unitScale.value} mm/unit (editable).`
             : `No unit info in drawing. Unit Scale defaulted to ${el.unitScale.value} (1 unit = 1 m). Edit if the drawing uses other units.`);
         syncToolSettings();
+    }
+
+    // Once the boundary is closed, refine the unit scale using the
+    // page-to-model transform of the viewport the points were picked in.
+    function applyBoundaryViewportScale() {
+        const vpId = tool.getViewportId?.();
+        const vpScale = getPageToModelScale(vpId);
+        if (vpScale === null) return;
+
+        const base = detectUnitScaleToMm().scale;
+        const combined = Number((base * vpScale).toFixed(6));
+        console.log(`[BarLayout] Viewport ${vpId}: pageToModel=${vpScale}, unitScaleToMm=${combined}`);
+
+        if (Math.abs(combined - Number(el.unitScale.value)) > 1e-6) {
+            el.unitScale.value = combined;
+            setBarStatus(`Boundary closed. Unit Scale set to ${combined} mm/unit (viewport ${vpId}, page-to-model ${vpScale.toFixed(6)}). Editable.`);
+        }
     }
 
     // Generate bars; if the unit scale is clearly wrong, auto-correct it.
@@ -432,10 +464,14 @@ function setupBarLayoutControls(viewer, urn, options = {}) {
         resetLayoutOnly();
         overlay.setBoundary(state.points, state.closed);
         setBarStatus(state.message);
-        
+
         activeBoundaryPoints = state.points;
         activeBoundaryClosed = state.closed;
-        
+
+        if (state.closed) {
+            applyBoundaryViewportScale();
+        }
+
         updateButtons();
     }
 

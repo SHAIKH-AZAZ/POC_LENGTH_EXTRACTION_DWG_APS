@@ -32,6 +32,27 @@ export class BoundaryDrawTool {
             chordLengthMm: 10
         };
         this.snappingRequested = false;
+        this.viewportVotes = {};
+        this.lastPickViewport = null;
+    }
+
+    // Track which 2D viewport the picked points belong to, so the app can
+    // apply that viewport's page-to-model scale (same as the Measure tool).
+    recordViewport(vpId) {
+        if (vpId === null || vpId === undefined) return;
+        this.viewportVotes[vpId] = (this.viewportVotes[vpId] || 0) + 1;
+    }
+
+    getViewportId() {
+        let best = null;
+        let bestCount = 0;
+        for (const [id, count] of Object.entries(this.viewportVotes)) {
+            if (count > bestCount) {
+                best = Number(id);
+                bestCount = count;
+            }
+        }
+        return best;
     }
 
     getName() {
@@ -114,6 +135,8 @@ export class BoundaryDrawTool {
         this.points = [];
         this.closed = false;
         this.circleCenter = null;
+        this.viewportVotes = {};
+        this.lastPickViewport = null;
         this.emitChange("Boundary cleared.");
     }
 
@@ -163,6 +186,8 @@ export class BoundaryDrawTool {
             this.emitStatus("Pick a point on the drawing.");
             return true;
         }
+
+        this.recordViewport(this.lastPickViewport);
 
         if (this.points.length && this.mode === "polygon") {
             const last = this.points[this.points.length - 1];
@@ -278,8 +303,12 @@ export class BoundaryDrawTool {
 
     getSnappedOrModelPoint(event) {
         if (this.snapper && this.snapper.isSnapped()) {
-            const snapPoint = this.extractSnapPoint(this.snapper.getSnapResult());
-            if (snapPoint) return clonePoint(snapPoint);
+            const result = this.snapper.getSnapResult();
+            const snapPoint = this.extractSnapPoint(result);
+            if (snapPoint) {
+                this.lastPickViewport = result?.viewportIndex2d ?? null;
+                return clonePoint(snapPoint);
+            }
         }
         return this.getModelPoint(event);
     }
@@ -392,12 +421,19 @@ export class BoundaryDrawTool {
 
         const clientHit = this.viewer.clientToWorld?.(canvasPoint.x, canvasPoint.y, true);
         const point = clientHit?.point || clientHit?.intersectPoint;
-        if (point) return clonePoint(point);
+        if (point) {
+            this.lastPickViewport = clientHit?.viewportIndex2d ?? null;
+            return clonePoint(point);
+        }
 
         const hit = this.viewer.impl?.hitTest?.(canvasPoint.x, canvasPoint.y, true);
         const hitPoint = hit?.intersectPoint || hit?.point;
-        if (hitPoint) return clonePoint(hitPoint);
+        if (hitPoint) {
+            this.lastPickViewport = hit?.viewportIndex2d ?? null;
+            return clonePoint(hitPoint);
+        }
 
+        this.lastPickViewport = null;
         return this.getPlanePoint(canvasPoint);
     }
 

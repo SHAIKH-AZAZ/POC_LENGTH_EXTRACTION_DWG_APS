@@ -1,14 +1,14 @@
 {
   "version": 2,
-  "dgSpecHash": "juXK5Tcss6A=",
+  "dgSpecHash": "1DuY8kxqL6I=",
   "success": true,
-  "projectFilePath": "/home/azaz/Desktop/code/POC ZIP FILES/POC-2/POC_LENGTH_EXTRACTION_DWG_APS/plugin/HatchBarsPlugin/HatchBarsPlugin.csproj",
+  "projectFilePath": "C:\\Users\\AZAZ\\Desktop\\POC _ Subh\\POC-2\\POC_LENGTH_EXTRACTION_DWG_APS\\plugin\\HatchBarsPlugin\\HatchBarsPlugin.csproj",
   "expectedPackageFiles": [
-    "/home/azaz/.nuget/packages/autocad.net/24.3.0/autocad.net.24.3.0.nupkg.sha512",
-    "/home/azaz/.nuget/packages/autocad.net.core/24.3.0/autocad.net.core.24.3.0.nupkg.sha512",
-    "/home/azaz/.nuget/packages/autocad.net.model/24.3.0/autocad.net.model.24.3.0.nupkg.sha512",
-    "/home/azaz/.nuget/packages/microsoft.netframework.referenceassemblies/1.0.3/microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
-    "/home/azaz/.nuget/packages/microsoft.netframework.referenceassemblies.net48/1.0.3/microsoft.netframework.referenceassemblies.net48.1.0.3.nupkg.sha512"
+    "C:\\Users\\AZAZ\\.nuget\\packages\\autocad.net\\24.3.0\\autocad.net.24.3.0.nupkg.sha512",
+    "C:\\Users\\AZAZ\\.nuget\\packages\\autocad.net.core\\24.3.0\\autocad.net.core.24.3.0.nupkg.sha512",
+    "C:\\Users\\AZAZ\\.nuget\\packages\\autocad.net.model\\24.3.0\\autocad.net.model.24.3.0.nupkg.sha512",
+    "C:\\Users\\AZAZ\\.nuget\\packages\\microsoft.netframework.referenceassemblies\\1.0.3\\microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
+    "C:\\Users\\AZAZ\\.nuget\\packages\\microsoft.netframework.referenceassemblies.net48\\1.0.3\\microsoft.netframework.referenceassemblies.net48.1.0.3.nupkg.sha512"
   ],
   "logs": []
 }

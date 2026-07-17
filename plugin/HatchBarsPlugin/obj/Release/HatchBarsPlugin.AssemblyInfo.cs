@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HatchBarsPlugin")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6ab9e4527e44e749f761a7f44e90a7b537154926")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e57a6d10b412549b06347a08ccdef213de6cbdf0")]
 [assembly: System.Reflection.AssemblyProductAttribute("HatchBarsPlugin")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HatchBarsPlugin")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

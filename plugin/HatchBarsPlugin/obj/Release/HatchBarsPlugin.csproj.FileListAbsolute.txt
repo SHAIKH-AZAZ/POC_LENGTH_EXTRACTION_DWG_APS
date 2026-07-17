@@ -8,3 +8,13 @@
 /home/azaz/Desktop/code/POC ZIP FILES/POC-2/POC_LENGTH_EXTRACTION_DWG_APS/plugin/HatchBarsPlugin/obj/Release/HatchBarsPlugin.sourcelink.json
 /home/azaz/Desktop/code/POC ZIP FILES/POC-2/POC_LENGTH_EXTRACTION_DWG_APS/plugin/HatchBarsPlugin/obj/Release/HatchBarsPlugin.dll
 /home/azaz/Desktop/code/POC ZIP FILES/POC-2/POC_LENGTH_EXTRACTION_DWG_APS/plugin/HatchBarsPlugin/obj/Release/HatchBarsPlugin.pdb
+C:\Users\AZAZ\Desktop\POC _ Subh\POC-2\POC_LENGTH_EXTRACTION_DWG_APS\plugin\HatchBarsPlugin\bin\Release\HatchBarsPlugin.dll
+C:\Users\AZAZ\Desktop\POC _ Subh\POC-2\POC_LENGTH_EXTRACTION_DWG_APS\plugin\HatchBarsPlugin\bin\Release\HatchBarsPlugin.pdb
+C:\Users\AZAZ\Desktop\POC _ Subh\POC-2\POC_LENGTH_EXTRACTION_DWG_APS\plugin\HatchBarsPlugin\obj\Release\HatchBarsPlugin.csproj.AssemblyReference.cache
+C:\Users\AZAZ\Desktop\POC _ Subh\POC-2\POC_LENGTH_EXTRACTION_DWG_APS\plugin\HatchBarsPlugin\obj\Release\HatchBarsPlugin.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\AZAZ\Desktop\POC _ Subh\POC-2\POC_LENGTH_EXTRACTION_DWG_APS\plugin\HatchBarsPlugin\obj\Release\HatchBarsPlugin.AssemblyInfoInputs.cache
+C:\Users\AZAZ\Desktop\POC _ Subh\POC-2\POC_LENGTH_EXTRACTION_DWG_APS\plugin\HatchBarsPlugin\obj\Release\HatchBarsPlugin.AssemblyInfo.cs
+C:\Users\AZAZ\Desktop\POC _ Subh\POC-2\POC_LENGTH_EXTRACTION_DWG_APS\plugin\HatchBarsPlugin\obj\Release\HatchBarsPlugin.csproj.CoreCompileInputs.cache
+C:\Users\AZAZ\Desktop\POC _ Subh\POC-2\POC_LENGTH_EXTRACTION_DWG_APS\plugin\HatchBarsPlugin\obj\Release\HatchBarsPlugin.sourcelink.json
+C:\Users\AZAZ\Desktop\POC _ Subh\POC-2\POC_LENGTH_EXTRACTION_DWG_APS\plugin\HatchBarsPlugin\obj\Release\HatchBarsPlugin.dll
+C:\Users\AZAZ\Desktop\POC _ Subh\POC-2\POC_LENGTH_EXTRACTION_DWG_APS\plugin\HatchBarsPlugin\obj\Release\HatchBarsPlugin.pdb
